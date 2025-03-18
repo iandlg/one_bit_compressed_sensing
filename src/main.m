@@ -35,7 +35,7 @@ end
 %% Test on random vector
 % Macros 
 M=100;
-N=50;
+N=51;
 K=5;
 L=3;
 maxiter=300;
