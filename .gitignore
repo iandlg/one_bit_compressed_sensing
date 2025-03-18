@@ -1,0 +1,4 @@
+src/snr_obbcs.mat
+output/obbcs.png
+output/snr_to_ratios.png
+data/mnist.mat
