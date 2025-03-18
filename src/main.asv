@@ -18,7 +18,7 @@ im_norm = norm(processed_images);
 %% Create sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-MNratios = linspace(0,2,10);
+MNratios = linspace(0,3,10);
 rows_list = floor(cols * MNratios);
 rows_list(1) = 50; 
 
@@ -104,8 +104,8 @@ plot(MNratios, snr_obbcs); hold on;
 plot(MNratios, snr_biht);
 plot(MNratios, snr_obpl);
 xlabel("MN ratios")
-ylabel("SNR (dB)") 
-legend("OBBCS", "BIHT","OBPL");
+ylabel("SNR (dB)")
+legend("OBBCS", "BIHT");
 
 %% Test on multiple images
 N = 10;
