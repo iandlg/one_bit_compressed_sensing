@@ -45,25 +45,44 @@ tor = 1e-6;
 [y,Phi,x]=gen_data(M,N,K,L);
 
 
-[x_obbcs, ~] = obbcs(y, Phi,maxiter,tor);
-[x_biht, ~] = biht_l1(y, Phi, K, maxiter, htol);
-x_oblp = one_bit_lp(y, Phi);
+[obbcs_dat.xhat, ~] = obbcs(y, Phi,maxiter,tor);
+[biht_dat.xhat, ~] = biht_l1(y, Phi, K, maxiter, htol);
+obpl_dat.xhat = one_bit_lp(y, Phi);
+
+[obbcs_dat.nmse, obbcs_dat.snr] = get_stats(x, obbcs_dat.xhat);
+[biht_dat.nmse, biht_dat.snr] = get_stats(x, biht_dat.xhat);
+[obpl_dat.nmse, obpl_dat.snr] = get_stats(x, obpl_dat.xhat);
+
 
 % Plot
 figure(1); clf;
 stem(x);hold on;
-stem(x_biht);
-stem(x_obbcs);
-stem(x_oblp)
+stem(obbcs_dat.xhat);
+stem(biht_dat.xhat);
+stem(obpl_dat.xhat)
 grid on; hold off
+
+disp(['OBBCS : NMSE = ', num2str(obbcs_dat.nmse), ''])
 
 %% Test on single image
 idx = 18;
 x = processed_images(:,idx);
 K = nnz(x);
-snr_obbcs = zeros(1, length(rows_list));
-snr_biht = zeros(1, length(rows_list));
-snr_obpl = zeros(1, length(rows_list));
+maxiter=300;
+htol = 0;
+tor = 1e-6;
+
+% obbcs.xhat = zeros(1, height*width);
+obbcs_dat.snr = zeros(1, length(rows_list));
+obbcs_dat.nmse = zeros(1, length(rows_list));
+
+% biht.xhat = zeros(1, height*width);
+biht_dat.snr = zeros(1, length(rows_list));
+biht_dat.nsme = zeros(1, length(rows_list));
+
+% obpl.xhat = zeros(1, height*width);
+obpl.snr = zeros(1, length(rows_list));
+obpl.nmse = zeros(1, length(rows_list));
 
 figure(2); clf;
 % subplot(2,10,1);
@@ -74,38 +93,56 @@ for i = 1:length(rows_list)
     disp(['Processing sensing matrix ', num2str(i),'/', num2str(length(rows_list))]);
     % Get measurement
     Phi = projection_matrices{i};
+    y = sgn(Phi*x);
 
     % Signal reconstruction
-    [x_biht, ~] = biht_l1(sgn(Phi*x), Phi, K, maxiter, htol);
-    [x_obbcs, ~] = obbcs(sgn(Phi*x), Phi, maxiter, tor);
-    x_oblp = one_bit_lp(sgn(Phi*x), Phi);
-    x_biht = rescale(pos(x_biht));
-    x_obbcs = rescale(pos(x_obbcs));
-    x_oblp = rescale(pos(x_oblp));
+    [biht_dat.xhat, ~] = biht_l1(y, Phi, K, maxiter, htol);
+    [obbcs_dat.xhat, ~] = obbcs(y, Phi, maxiter, tor);
+    obpl_dat.xhat = one_bit_lp(y, Phi);
+    
+    % Rescale
+    biht_dat.xhat = rescale(pos(biht_dat.xhat));
+    obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
+    obpl_dat.xhat = rescale(pos(obpl_dat.xhat));
 
     % Plot
     subplot(3,10,i);
-    imshow(reshape(x_biht,height,width))
+    imshow(reshape(biht_dat.xhat,height,width))
     subplot(3,10,10 + i);
-    imshow(reshape(x_obbcs,height,width))
+    imshow(reshape(obbcs_dat.xhat,height,width))
     subplot(3,10,20+i);
-    imshow(reshape(x_oblp, height, width))
+    imshow(reshape(obpl_dat.xhat, height, width))
 
     % Collect metrics
-    snr_biht(i) = snr(x, x-x_biht);
-    snr_obbcs(i) = snr(x, x-x_obbcs);
-    snr_obpl(i) = snr(x, x-x_oblp);
+    [biht_dat.nmse(i), biht_dat.snr(i)] = get_stats(x, biht_dat.xhat);
+    [obbcs_dat.nmse(i), obbcs_dat.snr(i)] = get_stats(x, obbcs_dat.xhat);
+    [obpl_dat.nmse(i), obpl_dat.snr(i)] = get_stats(x, obpl_dat.xhat);
     % plot(rescale(xhat, 0,1))
 end
 %%
 % Plot SNR
 figure(3); clf;
-plot(MNratios, snr_obbcs); hold on;
-plot(MNratios, snr_biht);
-plot(MNratios, snr_obpl);
+plot(MNratios, obbcs_dat.snr); hold on;
+plot(MNratios, biht_dat.snr);
+plot(MNratios, obpl_dat.snr);
 xlabel("MN ratios")
 ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBPL");
+exportgraphics(gcf, "../output/snr_to_ratios_1img.png", "Resolution",300);
+hold off;
+
+
+% Plot NMSE
+figure(4); clf;
+plot(MNratios, obbcs_dat.nmse); hold on;
+plot(MNratios, biht_dat.nmse);
+plot(MNratios, obpl_dat.nmse);
+xlabel("MN ratios")
+ylabel("NMSE") 
+legend("OBBCS", "BIHT","OBPL");
+exportgraphics(gcf, "../output/nmse_to_ratios_1img.png", "Resolution",300);
+hold off;
+
 
 %% Test on multiple images
 N = 10;
