@@ -43,7 +43,7 @@ htol = 0;
 tor = 1e-6;
 
 [y,Phi,x]=gen_data(M,N,K,L);
-
+y = bit_flip(y, 3)
 
 [obbcs_dat.xhat, ~] = obbcs(y, Phi,maxiter,tor);
 [biht_dat.xhat, ~] = biht_l1(y, Phi, K, maxiter, htol);
@@ -59,10 +59,13 @@ figure(1); clf;
 stem(x);hold on;
 stem(obbcs_dat.xhat);
 stem(biht_dat.xhat);
-stem(obpl_dat.xhat)
+stem(obpl_dat.xhat);
+legend('original', 'obbcs', 'biht', 'obpl');
 grid on; hold off
 
 disp(['OBBCS : NMSE = ', num2str(obbcs_dat.nmse), ''])
+disp(['BIHT : NMSE = ', num2str(biht_dat.nmse), ''])
+disp(['OBLP : NMSE = ', num2str(obpl_dat.nmse), ''])
 
 %% Test on single image
 idx = 18;
@@ -133,10 +136,13 @@ hold off;
 
 
 % Plot NMSE
+delta = nmse_lower_bound(height*width,rows_list, K, 1.4);
+
 figure(4); clf;
 plot(MNratios, obbcs_dat.nmse); hold on;
 plot(MNratios, biht_dat.nmse);
 plot(MNratios, obpl_dat.nmse);
+plot(MNratios,delta)
 xlabel("MN ratios")
 ylabel("NMSE") 
 legend("OBBCS", "BIHT","OBPL");
