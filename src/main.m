@@ -1,6 +1,7 @@
 %% import MNIST dataset
 clc; clear; close all;
-load('../data/mnist.mat')
+% load('../data/mnist.mat')
+load("mnist.mat")
 
 % image (training.images(:,:,18)*255);
 [height, width, image_num] = size(training.images);
@@ -47,11 +48,13 @@ y = bit_flip(y, 3)
 
 [obbcs_dat.xhat, ~] = obbcs(y, Phi,maxiter,tor);
 [biht_dat.xhat, ~] = biht_l1(y, Phi, K, maxiter, htol);
-obpl_dat.xhat = one_bit_lp(y, Phi);
+oblp_dat.xhat = one_bit_lp(y, Phi, 1);
+obbp_dat.xhat = one_bit_bp(y, Phi, 1);
 
 [obbcs_dat.nmse, obbcs_dat.snr] = get_stats(x, obbcs_dat.xhat);
 [biht_dat.nmse, biht_dat.snr] = get_stats(x, biht_dat.xhat);
-[obpl_dat.nmse, obpl_dat.snr] = get_stats(x, obpl_dat.xhat);
+[oblp_dat.nmse, oblp_dat.snr] = get_stats(x, oblp_dat.xhat);
+[obbp_dat.nmse, obbp_dat.snr] = get_stats(x, obbp_dat.xhat);
 
 
 % Plot
@@ -59,8 +62,9 @@ figure(1); clf;
 stem(x);hold on;
 stem(obbcs_dat.xhat);
 stem(biht_dat.xhat);
-stem(obpl_dat.xhat);
-legend('original', 'obbcs', 'biht', 'obpl');
+stem(oblp_dat.xhat)
+stem(obbp_dat.xhat)
+legend("OBBCS", "BIHT", "OBLP", "OBBP")
 grid on; hold off
 
 disp(['OBBCS : NMSE = ', num2str(obbcs_dat.nmse), ''])
@@ -87,6 +91,9 @@ biht_dat.nsme = zeros(1, length(rows_list));
 obpl.snr = zeros(1, length(rows_list));
 obpl.nmse = zeros(1, length(rows_list));
 
+obbp.snr = zeros(1, length(rows_list));
+obbp.nmse = zeros(1, length(rows_list));
+
 figure(2); clf;
 % subplot(2,10,1);
 % imshow(reshape(x,height, width));
@@ -101,25 +108,37 @@ for i = 1:length(rows_list)
     % Signal reconstruction
     [biht_dat.xhat, ~] = biht_l1(y, Phi, K, maxiter, htol);
     [obbcs_dat.xhat, ~] = obbcs(y, Phi, maxiter, tor);
-    obpl_dat.xhat = one_bit_lp(y, Phi);
+    oblp_dat.xhat = one_bit_lp(y, Phi);
+    obbp_dat.xhat = one_bit_bp(y, Phi);
     
     % Rescale
     biht_dat.xhat = rescale(pos(biht_dat.xhat));
     obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
-    obpl_dat.xhat = rescale(pos(obpl_dat.xhat));
+    oblp_dat.xhat = rescale(pos(oblp_dat.xhat));
+    obbp_dat.xhat = rescale(pos(obbp_dat.xhat));
 
     % Plot
-    subplot(3,10,i);
+    subplot(4,10,i); 
     imshow(reshape(biht_dat.xhat,height,width))
-    subplot(3,10,10 + i);
+    title('BIHT', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
+    subplot(4,10,10 + i); 
     imshow(reshape(obbcs_dat.xhat,height,width))
-    subplot(3,10,20+i);
-    imshow(reshape(obpl_dat.xhat, height, width))
+    title('OBBCS', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
+    subplot(4,10,20+i);
+    imshow(reshape(oblp_dat.xhat, height, width))
+    title('OBLP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
+    subplot(4,10,30+i); 
+    imshow(reshape(obbp_dat.xhat, height, width))
+    title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
+    
+    
 
     % Collect metrics
     [biht_dat.nmse(i), biht_dat.snr(i)] = get_stats(x, biht_dat.xhat);
     [obbcs_dat.nmse(i), obbcs_dat.snr(i)] = get_stats(x, obbcs_dat.xhat);
-    [obpl_dat.nmse(i), obpl_dat.snr(i)] = get_stats(x, obpl_dat.xhat);
+    [oblp_dat.nmse(i), oblp_dat.snr(i)] = get_stats(x, oblp_dat.xhat);
+    [obbp_dat.nmse(i), obbp_dat.snr(i)] = get_stats(x, obbp_dat.xhat);
+    
     % plot(rescale(xhat, 0,1))
 end
 %%
@@ -127,11 +146,14 @@ end
 figure(3); clf;
 plot(MNratios, obbcs_dat.snr); hold on;
 plot(MNratios, biht_dat.snr);
-plot(MNratios, obpl_dat.snr);
+plot(MNratios, oblp_dat.snr);
+plot(MNratios, obbp_dat.snr);
 xlabel("MN ratios")
 ylabel("SNR (dB)") 
-legend("OBBCS", "BIHT","OBPL");
-exportgraphics(gcf, "../output/snr_to_ratios_1img.png", "Resolution",300);
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid on;
+% exportgraphics(gcf, "../output/snr_to_ratios_1img.png", "Resolution",300);
+exportgraphics(gcf, "C:\Users\Admin\OneDrive - Delft University of Technology\DC and Sparsity\Combined\src\output_image_3.png","Resolution", 300);
 hold off;
 
 
@@ -141,12 +163,15 @@ delta = nmse_lower_bound(height*width,rows_list, K, 1.4);
 figure(4); clf;
 plot(MNratios, obbcs_dat.nmse); hold on;
 plot(MNratios, biht_dat.nmse);
-plot(MNratios, obpl_dat.nmse);
+plot(MNratios, oblp_dat.nmse);
+plot(MNratios, obbp_dat.nmse);
 plot(MNratios,delta)
 xlabel("MN ratios")
 ylabel("NMSE") 
-legend("OBBCS", "BIHT","OBPL");
-exportgraphics(gcf, "../output/nmse_to_ratios_1img.png", "Resolution",300);
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+% exportgraphics(gcf, "../output/nmse_to_ratios_1img.png", "Resolution",300);
+exportgraphics(gcf, "C:\Users\Admin\OneDrive - Delft University of Technology\DC and Sparsity\Combined\src\output_image_4.png","Resolution", 300);
 hold off;
 
 
@@ -200,6 +225,7 @@ xlabel("M/N ratios");
 ylabel("SNR (dB)")
 legend("OBBCS", "BIHT");
 grid on;
-exportgraphics(gcf, "../output/snr_to_ratios.png", "Resolution",300);
+% exportgraphics(gcf, "../output/snr_to_ratios.png", "Resolution",300);
+exportgraphics(gcf, "C:\Users\Admin\OneDrive - Delft University of Technology\DC and Sparsity\Combined\src\output_image_2.png","Resolution", 300);
 hold off;
 
