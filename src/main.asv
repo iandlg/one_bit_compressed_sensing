@@ -19,8 +19,9 @@ pos = @(in) in.*(in > 0);
 
 %% Flatten and normalize images
 processed_images = reshape(training.images, height*width, image_num);
-im_norm = vecnorm(processed_images,2,1);
-processed_images = processed_images./im_norm;
+im_norm = norm(processed_images);
+% processed_images = processed_images/im_norm;
+
 %% Create sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
@@ -121,23 +122,23 @@ for i = 1:length(rows_list)
     obbp_dat.xhat = one_bit_bp(y, Phi);
     
     % Rescale
-    biht_dat.xhat = pos(biht_dat.xhat);
-    obbcs_dat.xhat =pos(obbcs_dat.xhat);
-    oblp_dat.xhat = pos(oblp_dat.xhat);
-    obbp_dat.xhat = pos(obbp_dat.xhat);
+    biht_dat.xhat = rescale(pos(biht_dat.xhat));
+    obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
+    oblp_dat.xhat = rescale(pos(oblp_dat.xhat));
+    obbp_dat.xhat = rescale(pos(obbp_dat.xhat));
 
     % Plot
     subplot(4,10,i); 
-    imshow(reshape(rescale(biht_dat.xhat),height,width))
+    imshow(reshape(biht_dat.xhat,height,width))
     title('BIHT', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,10 + i); 
-    imshow(reshape(rescale(obbcs_dat.xhat),height,width))
+    imshow(reshape(obbcs_dat.xhat,height,width))
     title('OBBCS', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,20+i);
-    imshow(reshape(rescale(oblp_dat.xhat), height, width))
+    imshow(reshape(oblp_dat.xhat, height, width))
     title('OBLP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,30+i); 
-    imshow(reshape(rescale(obbp_dat.xhat), height, width))
+    imshow(reshape(obbp_dat.xhat, height, width))
     title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     
     % Collect metrics
@@ -151,7 +152,7 @@ output_file_path = fullfile(output_dir, "image_reconstruction_comparison.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
-%% Plot snr and nmse for single image
+%%
 % Plot SNR
 figure(3); clf;
 plot(MNratios, obbcs_dat.snr); hold on;
@@ -186,7 +187,7 @@ hold off;
 
 
 %% Test on multiple images
-N = 4;
+N = 3;
 
 obbcs_dat.snr = zeros(1, length(rows_list));
 obbcs_dat.nmse = zeros(1, length(rows_list));
@@ -227,10 +228,10 @@ for i = 1:length(rows_list)
         obbp_dat.xhat = one_bit_bp(y, Phi);
         
         % Rescale
-        biht_dat.xhat = pos(biht_dat.xhat);
-        obbcs_dat.xhat = pos(obbcs_dat.xhat);
-        oblp_dat.xhat = pos(oblp_dat.xhat);
-        obbp_dat.xhat = pos(obbp_dat.xhat);
+        biht_dat.xhat = rescale(pos(biht_dat.xhat));
+        obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
+        oblp_dat.xhat = rescale(pos(oblp_dat.xhat));
+        obbp_dat.xhat = rescale(pos(obbp_dat.xhat));
     
         % Collect metrics
         [nmse_biht_list(i), snr_biht_list(i)] = get_stats(x, biht_dat.xhat);
@@ -240,8 +241,8 @@ for i = 1:length(rows_list)
     end
 
     % Average out metrics
-    obbcs_dat.snr(i) = mean(snr_obbcs_list);
-    biht_dat.snr(i) = mean(snr_biht_list);
+    obbcs_dat.snr(i) = mean(snr);
+    biht_dat.snr(i) = mean(snr);
     oblp_dat.snr(i) = mean(snr_oblp_list);
     obbp_dat.snr(i) = mean(snr_obbp_list);
 
@@ -255,36 +256,20 @@ end
 output_file_path = fullfile(output_dir, 'average_metrics.mat');
 save(output_file_path, "obbcs_dat", "biht_dat", "oblp_dat", "obbp_dat");
 
-%% plot average snr and nmse for image
+%%
 % Plot average SNRs
-output_file_path = fullfile(output_dir, 'average_metrics.mat');
 load(output_file_path);
 
 figure(4); clf;
-plot(MNratios, obbcs_dat.snr); hold on;
-%
+plot(MNratios, obbp_dat.snr); hold on;
 plot(MNratios, biht_dat.snr);
-plot(MNratios, oblp_dat.snr);
 plot(MNratios, obbp_dat.snr);
+plot(MNratios, oblp_dat.snr);
 xlabel("M/N ratios");
 ylabel("SNR (dB)")
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT");
 grid on;
-output_file_path = fullfile(output_dir, "avg_snr_to_ratios.png");
-exportgraphics(gcf, output_file_path, "Resolution",300);
-hold off;
-
-% Plot average NMSEs
-figure(5); clf;
-plot(MNratios, obbcs_dat.nmse); hold on;
-plot(MNratios, biht_dat.nmse);
-plot(MNratios, oblp_dat.nmse);
-plot(MNratios, obbp_dat.nmse);
-xlabel("M/N ratios");
-ylabel("NMSE")
-legend("OBBCS", "BIHT","OBLP", "OBBP");
-grid on;
-output_file_path = fullfile(output_dir, "avg_nmse_to_ratios.png");
+output_file_path = fullfile(output_dir, "snr_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 

@@ -7,3 +7,4 @@ function y_flipped = bit_flip(y,k_flips)
     flip_loc=ind_flip(1:k_flips);
     y_flipped(flip_loc)=~(y_flipped(flip_loc));
 end
+
