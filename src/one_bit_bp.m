@@ -14,8 +14,8 @@ function x_opt = one_bit_bp(y, A, ~)
            
         minimize (norm(x, 1) + lambda * norm(D * x, 1))
         subject to 
-            diag(y)* (A* x) >= 0
-            % norm(x,2) == 1;
+            y.*(A*x) >= 0;
+                     % norm(x,2) == 1;
 
     cvx_end
 
