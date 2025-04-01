@@ -16,9 +16,11 @@ function [xhat,stats] = biht_l1(y, Phi, K, maxiter, htol)
 
     A = @(in) sgn(Phi*in);
 
-    N = size(Phi, 2);
+    [M, N] = size(Phi);
     xhat = zeros(N,1);
     hd = Inf;
+
+    tau = 1/(sqrt(M)*norm(Phi));
     
     ii=0;
     while(htol < hd)&&(ii < maxiter)
@@ -26,7 +28,7 @@ function [xhat,stats] = biht_l1(y, Phi, K, maxiter, htol)
 	    g = Phi'*(A(xhat) - y);
 	    
 	    % Step
-	    a = xhat - g;
+	    a = xhat - tau/2*g;
 	    
 	    % Best K-term (threshold)
 	    [trash, aidx] = sort(abs(a), 'descend');

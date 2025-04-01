@@ -2,11 +2,11 @@
 clc; clear; close all;
 
 % Put the mnist.mat file in the ../data directory
-data_dir = "../data";
+data_dir = fullfile(".." , "data");
 mnsit_dir = fullfile(data_dir, "mnist.mat");
 load(mnsit_dir)
 
-output_dir = "../out";
+output_dir = fullfile("..", "out");
 if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
@@ -41,10 +41,14 @@ y = bit_flip(y,k_flip);              % perform bit flip
 oblp_dat.xhat = one_bit_lp(y, Phi, 1);
 obbp_dat.xhat = one_bit_bp(y, Phi, 1);
 
-[obbcs_dat.nmse, obbcs_dat.snr] = get_stats(x, obbcs_dat.xhat);
-[biht_dat.nmse, biht_dat.snr] = get_stats(x, biht_dat.xhat);
-[oblp_dat.nmse, oblp_dat.snr] = get_stats(x, oblp_dat.xhat);
-[obbp_dat.nmse, obbp_dat.snr] = get_stats(x, obbp_dat.xhat);
+[obbcs_dat.nmse, obbcs_dat.snr, obbcs_dat.hamerr, obbcs_dat.angerr] = ...
+    get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+[biht_dat.nmse, biht_dat.snr, biht_dat.hamerr, biht_dat.angerr] = ...
+    get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
+[oblp_dat.nmse, oblp_dat.snr, oblp_dat.hamerr, oblp_dat.angerr] = ...
+    get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+[obbp_dat.nmse, obbp_dat.snr, obbp_dat.hamerr, obbp_dat.angerr] = ...
+    get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
 
 
 % Plot
@@ -72,11 +76,7 @@ disp(['OBBP : NMSE = ', num2str(obbp_dat.nmse), ''])
 %% Create the sensing matrice + bit flip numbers
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-measurements = floor(1.1*cols); % 
-
-% make the measuremet matrix 
-Phi = randn(measurements, cols);
-Phi = Phi./vecnorm(Phi, 2 ,1);
+measurements = floor(1.3*cols); % 
 
 % Generate the bit flip array
 % flips from 0-30% of measurements in 8 steps
@@ -92,15 +92,23 @@ tor = 1e-6;
 
 obbcs_dat.snr = zeros(1, length(flips));
 obbcs_dat.nmse = zeros(1, length(flips));
+obbcs_dat.hamerr = zeros(1, length(flips));
+obbcs_dat.angerr = zeros(1, length(flips));
 
 biht_dat.snr = zeros(1, length(flips));
 biht_dat.nsme = zeros(1, length(flips));
+biht_dat.hamerr = zeros(1, length(flips));
+biht_dat.angerr = zeros(1, length(flips));
 
 oblp_dat.snr = zeros(1, length(flips));
 oblp_dat.nmse = zeros(1, length(flips));
+oblp_dat.hamerr = zeros(1, length(flips));
+oblp_dat.angerr = zeros(1, length(flips));
 
 obbp_dat.snr = zeros(1, length(flips));
 obbp_dat.nmse = zeros(1, length(flips));
+obbp_dat.hamerr = zeros(1, length(flips));
+obbp_dat.angerr = zeros(1, length(flips));
 
 figure(2); clf; hold on;
 % subplot(2,10,1);
@@ -110,6 +118,10 @@ figure(2); clf; hold on;
 for i = 1:length(flips)
     disp([num2str(i),'/',num2str(length(flips)), ...
         ' - Processing reconstruction with ', num2str(flips(i)),' bit flips']);
+
+    % Get measurement matrix
+    Phi = gen_matrix(measurements, cols);
+
     % Get measurement
     y = sgn(Phi*x);
     
@@ -122,11 +134,11 @@ for i = 1:length(flips)
     oblp_dat.xhat = one_bit_lp(y_flip, Phi);
     obbp_dat.xhat = one_bit_bp(y_flip, Phi);
     
-    % Rescale
-    biht_dat.xhat = pos(biht_dat.xhat);
-    obbcs_dat.xhat =pos(obbcs_dat.xhat);
-    oblp_dat.xhat = pos(oblp_dat.xhat);
-    obbp_dat.xhat = pos(obbp_dat.xhat);
+    % % Rescale
+    % biht_dat.xhat = pos(biht_dat.xhat);
+    % obbcs_dat.xhat = pos(obbcs_dat.xhat);
+    % oblp_dat.xhat = pos(oblp_dat.xhat);
+    % obbp_dat.xhat = pos(obbp_dat.xhat);
 
     % Plot
     subplot(4,10,i); 
@@ -143,10 +155,14 @@ for i = 1:length(flips)
     title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     
     % Collect metrics
-    [biht_dat.nmse(i), biht_dat.snr(i)] = get_stats(x, biht_dat.xhat);
-    [obbcs_dat.nmse(i), obbcs_dat.snr(i)] = get_stats(x, obbcs_dat.xhat);
-    [oblp_dat.nmse(i), oblp_dat.snr(i)] = get_stats(x, oblp_dat.xhat);
-    [obbp_dat.nmse(i), obbp_dat.snr(i)] = get_stats(x, obbp_dat.xhat);
+    [biht_dat.nmse(i), biht_dat.snr(i), biht_dat.hamerr(i), biht_dat.angerr(i)] = ...
+        get_stats(x, biht_dat.xhat, y, sgn(Phi*biht_dat.xhat));
+    [obbcs_dat.nmse(i), obbcs_dat.snr(i), obbcs_dat.hamerr(i), obbcs_dat.angerr(i)] = ...
+        get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+    [oblp_dat.nmse(i), oblp_dat.snr(i), oblp_dat.hamerr(i), oblp_dat.angerr(i)] = ...
+        get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+    [obbp_dat.nmse(i), obbp_dat.snr(i), obbp_dat.hamerr(i), obbp_dat.angerr(i)] = ...
+        get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
 end
 
 output_file_path = fullfile(output_dir, "image_reconstruction_comparison_bitflip.png");
@@ -175,28 +191,64 @@ plot(flips/measurements*100, obbcs_dat.nmse); hold on;
 plot(flips/measurements*100, biht_dat.nmse);
 plot(flips/measurements*100, oblp_dat.nmse);
 plot(flips/measurements*100, obbp_dat.nmse);
-xlabel("MN ratios")
+xlabel("Percentage of flipped bits")
 ylabel("NMSE") 
-legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound");
+legend("OBBCS", "BIHT","OBLP", "OBBP");
 grid('on')
 output_file_path = fullfile(output_dir, "nmse_to_ratios_1img_bitflip.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
+% Plot normalized Hamming error
+figure(5); clf;
+plot(flips/measurements*100, obbcs_dat.hamerr); hold on;
+plot(flips/measurements*100, biht_dat.hamerr);
+plot(flips/measurements*100, oblp_dat.hamerr);
+plot(flips/measurements*100, obbp_dat.hamerr);
+xlabel("Percentage of flipped bits")
+ylabel("Normalized Hamming error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "hamming_err_to_ratios_1img_bitflip.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized angular error
+figure(6); clf;
+plot(flips/measurements*100, obbcs_dat.angerr); hold on;
+plot(flips/measurements*100, biht_dat.angerr);
+plot(flips/measurements*100, oblp_dat.angerr);
+plot(flips/measurements*100, obbp_dat.angerr);
+xlabel("Percentage of flipped bits")
+ylabel("Normalized angular error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "angular_err_to_ratios_1img_bitflip.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
 %% Test on multiple images bitflip
-N = 4;
+N = 6;
 
 obbcs_dat.snr = zeros(1, length(flips));
 obbcs_dat.nmse = zeros(1, length(flips));
+obbcs_dat.hamerr = zeros(1, length(flips));
+obbcs_dat.angerr = zeros(1, length(flips));
 
 biht_dat.snr = zeros(1, length(flips));
 biht_dat.nsme = zeros(1, length(flips));
+biht_dat.hamerr = zeros(1, length(flips));
+biht_dat.angerr = zeros(1, length(flips));
 
 oblp_dat.snr = zeros(1, length(flips));
 oblp_dat.nmse = zeros(1, length(flips));
+oblp_dat.hamerr = zeros(1, length(flips));
+oblp_dat.angerr = zeros(1, length(flips));
 
 obbp_dat.snr = zeros(1, length(flips));
 obbp_dat.nmse = zeros(1, length(flips));
+obbp_dat.hamerr = zeros(1, length(flips));
+obbp_dat.angerr = zeros(1, length(flips));
 
 for i = 1:length(flips)
     snr_biht_list = zeros(1,N);
@@ -209,10 +261,23 @@ for i = 1:length(flips)
     nmse_oblp_list = zeros(1,N);
     nmse_obbp_list = zeros(1,N);
 
+    hamerr_biht_list = zeros(1,N);
+    hamerr_obbcs_list = zeros(1,N);
+    hamerr_oblp_list = zeros(1,N);
+    hamerr_obbp_list = zeros(1,N);
+
+    angerr_biht_list = zeros(1,N);
+    angerr_obbcs_list = zeros(1,N);
+    angerr_oblp_list = zeros(1,N);
+    angerr_obbp_list = zeros(1,N);
+
     disp([num2str(i),'/',num2str(length(flips)), ...
         ' - Processing reconstruction with ', num2str(flips(i)),' bit flips']);
 
     for j = 1:N
+        % Get sensing matrix
+        Phi = gen_matrix(measurements, cols);
+
         % Get measurement
         x = processed_images(:,j);
         y = sgn(Phi*x);
@@ -225,17 +290,21 @@ for i = 1:length(flips)
         oblp_dat.xhat = one_bit_lp(y_flip, Phi);
         obbp_dat.xhat = one_bit_bp(y_flip, Phi);
         
-        % Rescale
-        biht_dat.xhat = pos(biht_dat.xhat);
-        obbcs_dat.xhat = pos(obbcs_dat.xhat);
-        oblp_dat.xhat = pos(oblp_dat.xhat);
-        obbp_dat.xhat = pos(obbp_dat.xhat);
+        % % Rescale
+        % biht_dat.xhat = pos(biht_dat.xhat);
+        % obbcs_dat.xhat = pos(obbcs_dat.xhat);
+        % oblp_dat.xhat = pos(oblp_dat.xhat);
+        % obbp_dat.xhat = pos(obbp_dat.xhat);
     
         % Collect metrics
-        [nmse_biht_list(i), snr_biht_list(i)] = get_stats(x, biht_dat.xhat);
-        [nmse_obbcs_list(i), snr_obbcs_list(i)] = get_stats(x, obbcs_dat.xhat);
-        [nmse_oblp_list(i), snr_oblp_list(i)] = get_stats(x, oblp_dat.xhat);
-        [nmse_obbp_list(i), snr_obbp_list(i)] = get_stats(x, obbp_dat.xhat);
+        [nmse_biht_list(i), snr_biht_list(i), hamerr_biht_list(i), angerr_biht_list(i)] = ...
+            get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
+        [nmse_obbcs_list(i), snr_obbcs_list(i), hamerr_obbcs_list(i), angerr_obbcs_list(i)] = ...
+            get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+        [nmse_oblp_list(i), snr_oblp_list(i), hamerr_oblp_list(i), angerr_oblp_list(i)] = ...
+            get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+        [nmse_obbp_list(i), snr_obbp_list(i), hamerr_obbp_list(i), angerr_obbp_list(i)] = ...
+            get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
     end
 
     % Average out metrics
@@ -249,6 +318,16 @@ for i = 1:length(flips)
     oblp_dat.nmse(i) = mean(nmse_oblp_list);
     obbp_dat.nmse(i) = mean(nmse_obbp_list);
 
+    obbcs_dat.hamerr(i) = mean(hamerr_obbcs_list);
+    biht_dat.hamerr(i)= mean(hamerr_biht_list);
+    oblp_dat.hamerr(i) = mean(hamerr_oblp_list);
+    obbp_dat.hamerr(i) = mean(hamerr_obbp_list);
+
+    obbcs_dat.angerr(i) = mean(angerr_obbcs_list);
+    biht_dat.angerr(i)= mean(angerr_biht_list);
+    oblp_dat.angerr(i) = mean(angerr_oblp_list);
+    obbp_dat.angerr(i) = mean(angerr_obbp_list);
+
 end
 
 output_file_path = fullfile(output_dir, 'average_metrics_bitflip.mat');
@@ -259,29 +338,59 @@ save(output_file_path, "obbcs_dat", "biht_dat", "oblp_dat", "obbp_dat");
 output_file_path = fullfile(output_dir, 'average_metrics_bitflip.mat');
 load(output_file_path);
 
-figure(4); clf;
+% Plot SNR
+figure(6); clf;
 plot(flips/measurements*100, obbcs_dat.snr); hold on;
 plot(flips/measurements*100, biht_dat.snr);
 plot(flips/measurements*100, oblp_dat.snr);
 plot(flips/measurements*100, obbp_dat.snr);
-xlabel("Percentage of flipped bits");
-ylabel("SNR (dB)")
+xlabel("Percentage of flipped bits")
+ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBLP", "OBBP");
 grid on;
-output_file_path = fullfile(output_dir, "avg_snr_to_ratios_bitflip.png");
+output_file_path = fullfile(output_dir, "snr_to_ratios_1img_bitflip.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
-% Plot average NMSEs
-figure(5); clf;
+
+% Plot NMSE
+figure(7); clf;
 plot(flips/measurements*100, obbcs_dat.nmse); hold on;
 plot(flips/measurements*100, biht_dat.nmse);
 plot(flips/measurements*100, oblp_dat.nmse);
 plot(flips/measurements*100, obbp_dat.nmse);
-xlabel("Percentage of flipped bits");
-ylabel("NMSE")
+xlabel("Percentage of flipped bits")
+ylabel("NMSE") 
 legend("OBBCS", "BIHT","OBLP", "OBBP");
-grid on;
-output_file_path = fullfile(output_dir, "avg_nmse_to_ratios_bitflip.png");
+grid('on')
+output_file_path = fullfile(output_dir, "nmse_to_ratios_bitflip.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized Hamming error
+figure(8); clf;
+plot(flips/measurements*100, obbcs_dat.hamerr); hold on;
+plot(flips/measurements*100, biht_dat.hamerr);
+plot(flips/measurements*100, oblp_dat.hamerr);
+plot(flips/measurements*100, obbp_dat.hamerr);
+xlabel("Percentage of flipped bits")
+ylabel("Normalized Hamming error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "hamming_err_to_ratios_bitflip.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized angular error
+figure(9); clf;
+plot(flips/measurements*100, obbcs_dat.angerr); hold on;
+plot(flips/measurements*100, biht_dat.angerr);
+plot(flips/measurements*100, oblp_dat.angerr);
+plot(flips/measurements*100, obbp_dat.angerr);
+xlabel("Percentage of flipped bits")
+ylabel("Normalized angular error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "angular_err_to_ratios_bitflip.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;

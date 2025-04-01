@@ -2,11 +2,11 @@
 clc; clear; close all;
 
 % Put the mnist.mat file in the ../data directory
-data_dir = "../data";
+data_dir = fullfile(".." , "data");
 mnsit_dir = fullfile(data_dir, "mnist.mat");
 load(mnsit_dir)
 
-output_dir = "../out";
+output_dir = fullfile("..", "out");
 if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
@@ -19,25 +19,14 @@ pos = @(in) in.*(in > 0);
 
 %% Flatten and normalize images
 processed_images = reshape(training.images, height*width, image_num);
-im_norm = norm(processed_images);
-% processed_images = processed_images/im_norm;
-
-%% Create sensing matrices
+im_norm = vecnorm(processed_images,2,1);
+processed_images = processed_images./im_norm;
+%% Create data for sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
 MNratios = linspace(0,2,10);
 rows_list = floor(cols * MNratios);
 rows_list(1) = 50; 
-
-% Generate random matrices and normalize columns
-projection_matrices = cell(1, length(rows_list));
-
-for i = 1:length(rows_list)
-    rows = rows_list(i);
-    W = randn(rows, cols);  % Draw from standard normal distribution
-    W = W ./ vecnorm(W, 2, 1);  % Normalize columns to unit L2 norm
-    projection_matrices{i} = W;
-end
 
 %% Test on random vector
 % Macros 
@@ -56,10 +45,10 @@ tor = 1e-6;
 oblp_dat.xhat = one_bit_lp(y, Phi, 1);
 obbp_dat.xhat = one_bit_bp(y, Phi, 1);
 
-[obbcs_dat.nmse, obbcs_dat.snr] = get_stats(x, obbcs_dat.xhat);
-[biht_dat.nmse, biht_dat.snr] = get_stats(x, biht_dat.xhat);
-[oblp_dat.nmse, oblp_dat.snr] = get_stats(x, oblp_dat.xhat);
-[obbp_dat.nmse, obbp_dat.snr] = get_stats(x, obbp_dat.xhat);
+[obbcs_dat.nmse, obbcs_dat.snr, obbcs_dat.hamerr, obbcs_dat.angerr] = get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+[biht_dat.nmse, biht_dat.snr, biht_dat.hamerr, biht_dat.angerr] = get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
+[oblp_dat.nmse, oblp_dat.snr, oblp_dat.hamerr, oblp_dat.angerr] = get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+[obbp_dat.nmse, obbp_dat.snr, obbp_dat.hamerr, obbp_dat.angerr] = get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
 
 
 % Plot
@@ -94,15 +83,23 @@ tor = 1e-6;
 
 obbcs_dat.snr = zeros(1, length(rows_list));
 obbcs_dat.nmse = zeros(1, length(rows_list));
+obbcs_dat.hamerr = zeros(1, length(rows_list));
+obbcs_dat.angerr = zeros(1, length(rows_list));
 
 biht_dat.snr = zeros(1, length(rows_list));
 biht_dat.nsme = zeros(1, length(rows_list));
+biht_dat.hamerr = zeros(1, length(rows_list));
+biht_dat.angerr = zeros(1, length(rows_list));
 
 oblp_dat.snr = zeros(1, length(rows_list));
 oblp_dat.nmse = zeros(1, length(rows_list));
+oblp_dat.hamerr = zeros(1, length(rows_list));
+oblp_dat.angerr = zeros(1, length(rows_list));
 
 obbp_dat.snr = zeros(1, length(rows_list));
 obbp_dat.nmse = zeros(1, length(rows_list));
+obbp_dat.hamerr = zeros(1, length(rows_list));
+obbp_dat.angerr = zeros(1, length(rows_list));
 
 figure(2); clf; hold on;
 % subplot(2,10,1);
@@ -112,7 +109,7 @@ figure(2); clf; hold on;
 for i = 1:length(rows_list)
     disp(['Processing sensing matrix ', num2str(i),'/', num2str(length(rows_list))]);
     % Get measurement
-    Phi = projection_matrices{i};
+    Phi = gen_matrix(rows_list(i), cols);
     y = sgn(Phi*x);
 
     % Signal reconstruction
@@ -122,37 +119,41 @@ for i = 1:length(rows_list)
     obbp_dat.xhat = one_bit_bp(y, Phi);
     
     % Rescale
-    biht_dat.xhat = rescale(pos(biht_dat.xhat));
-    obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
-    oblp_dat.xhat = rescale(pos(oblp_dat.xhat));
-    obbp_dat.xhat = rescale(pos(obbp_dat.xhat));
+    biht_dat.xhat = pos(biht_dat.xhat);
+    obbcs_dat.xhat =pos(obbcs_dat.xhat);
+    oblp_dat.xhat = pos(oblp_dat.xhat);
+    obbp_dat.xhat = pos(obbp_dat.xhat);
 
     % Plot
     subplot(4,10,i); 
-    imshow(reshape(biht_dat.xhat,height,width))
+    imshow(reshape(rescale(biht_dat.xhat),height,width))
     title('BIHT', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,10 + i); 
-    imshow(reshape(obbcs_dat.xhat,height,width))
+    imshow(reshape(rescale(obbcs_dat.xhat),height,width))
     title('OBBCS', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,20+i);
-    imshow(reshape(oblp_dat.xhat, height, width))
+    imshow(reshape(rescale(oblp_dat.xhat), height, width))
     title('OBLP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,10,30+i); 
-    imshow(reshape(obbp_dat.xhat, height, width))
+    imshow(reshape(rescale(obbp_dat.xhat), height, width))
     title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     
     % Collect metrics
-    [biht_dat.nmse(i), biht_dat.snr(i)] = get_stats(x, biht_dat.xhat);
-    [obbcs_dat.nmse(i), obbcs_dat.snr(i)] = get_stats(x, obbcs_dat.xhat);
-    [oblp_dat.nmse(i), oblp_dat.snr(i)] = get_stats(x, oblp_dat.xhat);
-    [obbp_dat.nmse(i), obbp_dat.snr(i)] = get_stats(x, obbp_dat.xhat);
+    [biht_dat.nmse(i), biht_dat.snr(i), biht_dat.hamerr(i), biht_dat.angerr(i)] = ...
+        get_stats(x, biht_dat.xhat, y, sgn(Phi*biht_dat.xhat));
+    [obbcs_dat.nmse(i), obbcs_dat.snr(i), obbcs_dat.hamerr(i), obbcs_dat.angerr(i)] = ...
+        get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+    [oblp_dat.nmse(i), oblp_dat.snr(i), oblp_dat.hamerr(i), oblp_dat.angerr(i)] = ...
+        get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+    [obbp_dat.nmse(i), obbp_dat.snr(i), obbp_dat.hamerr(i), obbp_dat.angerr(i)] = ...
+        get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
 end
 
 output_file_path = fullfile(output_dir, "image_reconstruction_comparison.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
-%%
+%% Plot snr and nmse for single image
 % Plot SNR
 figure(3); clf;
 plot(MNratios, obbcs_dat.snr); hold on;
@@ -185,21 +186,57 @@ output_file_path = fullfile(output_dir, "nmse_to_ratios_1img.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
+% Plot normalized Hamming error
+figure(5); clf;
+plot(MNratios, obbcs_dat.hamerr); hold on;
+plot(MNratios, biht_dat.hamerr);
+plot(MNratios, oblp_dat.hamerr);
+plot(MNratios, obbp_dat.hamerr);
+xlabel("MN ratios")
+ylabel("Normalized Hamming error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "hamming_err_to_ratios_1img.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized angular error
+figure(6); clf;
+plot(MNratios, obbcs_dat.angerr); hold on;
+plot(MNratios, biht_dat.angerr);
+plot(MNratios, oblp_dat.angerr);
+plot(MNratios, obbp_dat.angerr);
+xlabel("MN ratios")
+ylabel("Normalized angular error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "angle_err_to_ratios_1img.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
 
 %% Test on multiple images
-N = 3;
+N = 6;
 
 obbcs_dat.snr = zeros(1, length(rows_list));
 obbcs_dat.nmse = zeros(1, length(rows_list));
+obbcs_dat.hamerr = zeros(1, length(rows_list));
+obbcs_dat.angerr = zeros(1, length(rows_list));
 
 biht_dat.snr = zeros(1, length(rows_list));
 biht_dat.nsme = zeros(1, length(rows_list));
+biht_dat.hamerr = zeros(1, length(rows_list));
+biht_dat.angerr = zeros(1, length(rows_list));
 
 oblp_dat.snr = zeros(1, length(rows_list));
 oblp_dat.nmse = zeros(1, length(rows_list));
+oblp_dat.hamerr = zeros(1, length(rows_list));
+oblp_dat.angerr = zeros(1, length(rows_list));
 
 obbp_dat.snr = zeros(1, length(rows_list));
 obbp_dat.nmse = zeros(1, length(rows_list));
+obbp_dat.hamerr = zeros(1, length(rows_list));
+obbp_dat.angerr = zeros(1, length(rows_list));
 
 for i = 1:length(rows_list)
     snr_biht_list = zeros(1,N);
@@ -212,11 +249,21 @@ for i = 1:length(rows_list)
     nmse_oblp_list = zeros(1,N);
     nmse_obbp_list = zeros(1,N);
 
+    hamerr_biht_list = zeros(1,N);
+    hamerr_obbcs_list = zeros(1,N);
+    hamerr_oblp_list = zeros(1,N);
+    hamerr_obbp_list = zeros(1,N);
+
+    angerr_biht_list = zeros(1,N);
+    angerr_obbcs_list = zeros(1,N);
+    angerr_oblp_list = zeros(1,N);
+    angerr_obbp_list = zeros(1,N);
+
     disp(['Processing sensing matrix ', num2str(i),'/', num2str(length(rows_list))]);
 
     for j = 1:N
         % Get measurement
-        Phi = projection_matrices{i};
+        Phi = gen_matrix(rows_list(i),cols);
         x = processed_images(:,j);
         y = sgn(Phi*x);
         K = nnz(x);
@@ -228,21 +275,25 @@ for i = 1:length(rows_list)
         obbp_dat.xhat = one_bit_bp(y, Phi);
         
         % Rescale
-        biht_dat.xhat = rescale(pos(biht_dat.xhat));
-        obbcs_dat.xhat = rescale(pos(obbcs_dat.xhat));
-        oblp_dat.xhat = rescale(pos(oblp_dat.xhat));
-        obbp_dat.xhat = rescale(pos(obbp_dat.xhat));
+        biht_dat.xhat = pos(biht_dat.xhat);
+        obbcs_dat.xhat = pos(obbcs_dat.xhat);
+        oblp_dat.xhat = pos(oblp_dat.xhat);
+        obbp_dat.xhat = pos(obbp_dat.xhat);
     
         % Collect metrics
-        [nmse_biht_list(i), snr_biht_list(i)] = get_stats(x, biht_dat.xhat);
-        [nmse_obbcs_list(i), snr_obbcs_list(i)] = get_stats(x, obbcs_dat.xhat);
-        [nmse_oblp_list(i), snr_oblp_list(i)] = get_stats(x, oblp_dat.xhat);
-        [nmse_obbp_list(i), snr_obbp_list(i)] = get_stats(x, obbp_dat.xhat);
+        [nmse_biht_list(i), snr_biht_list(i), hamerr_biht_list(i), angerr_biht_list(i)] = ...
+            get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
+        [nmse_obbcs_list(i), snr_obbcs_list(i), hamerr_obbcs_list(i), angerr_obbcs_list(i)] = ...
+            get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
+        [nmse_oblp_list(i), snr_oblp_list(i), hamerr_oblp_list(i), angerr_oblp_list(i)] = ...
+            get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
+        [nmse_obbp_list(i), snr_obbp_list(i), hamerr_obbp_list(i), angerr_obbp_list(i)] = ...
+            get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
     end
 
     % Average out metrics
-    obbcs_dat.snr(i) = mean(snr);
-    biht_dat.snr(i) = mean(snr);
+    obbcs_dat.snr(i) = mean(snr_obbcs_list);
+    biht_dat.snr(i) = mean(snr_biht_list);
     oblp_dat.snr(i) = mean(snr_oblp_list);
     obbp_dat.snr(i) = mean(snr_obbp_list);
 
@@ -251,25 +302,79 @@ for i = 1:length(rows_list)
     oblp_dat.nmse(i) = mean(nmse_oblp_list);
     obbp_dat.nmse(i) = mean(nmse_obbp_list);
 
+    obbcs_dat.hamerr(i) = mean(hamerr_obbcs_list);
+    biht_dat.hamerr(i)= mean(hamerr_biht_list);
+    oblp_dat.hamerr(i) = mean(hamerr_oblp_list);
+    obbp_dat.hamerr(i) = mean(hamerr_obbp_list);
+
+    obbcs_dat.angerr(i) = mean(angerr_obbcs_list);
+    biht_dat.angerr(i)= mean(angerr_biht_list);
+    oblp_dat.angerr(i) = mean(angerr_oblp_list);
+    obbp_dat.angerr(i) = mean(angerr_obbp_list);   
+
 end
 
 output_file_path = fullfile(output_dir, 'average_metrics.mat');
 save(output_file_path, "obbcs_dat", "biht_dat", "oblp_dat", "obbp_dat");
 
-%%
-% Plot average SNRs
-load(output_file_path);
+%% plot average snr and nmse for image
+% Plot SNR
+figure(3); clf;
+plot(MNratios, obbcs_dat.snr); hold on;
+plot(MNratios, biht_dat.snr);
+plot(MNratios, oblp_dat.snr);
+plot(MNratios, obbp_dat.snr);
+xlabel("MN ratios")
+ylabel("SNR (dB)") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid on;
+output_file_path = fullfile(output_dir, "snr_to_ratios_1img.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+
+% Plot NMSE
+delta = nmse_lower_bound(height*width,rows_list, K, 1.4);
 
 figure(4); clf;
-plot(MNratios, obbp_dat.snr); hold on;
-plot(MNratios, biht_dat.snr);
-plot(MNratios, obbp_dat.snr);
-plot(MNratios, oblp_dat.snr);
-xlabel("M/N ratios");
-ylabel("SNR (dB)")
-legend("OBBCS", "BIHT");
-grid on;
-output_file_path = fullfile(output_dir, "snr_to_ratios.png");
+plot(MNratios, obbcs_dat.nmse); hold on;
+plot(MNratios, biht_dat.nmse);
+plot(MNratios, oblp_dat.nmse);
+plot(MNratios, obbp_dat.nmse);
+plot(MNratios,delta, "--", Color="black")
+xlabel("MN ratios")
+ylabel("NMSE") 
+legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound");
+grid('on')
+output_file_path = fullfile(output_dir, "nmse_to_ratios_1img.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized Hamming error
+figure(5); clf;
+plot(MNratios, obbcs_dat.hamerr); hold on;
+plot(MNratios, biht_dat.hamerr);
+plot(MNratios, oblp_dat.hamerr);
+plot(MNratios, obbp_dat.hamerr);
+xlabel("MN ratios")
+ylabel("Normalized Hamming error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "hamming_err_to_ratios_1img.png");
+exportgraphics(gcf, output_file_path, "Resolution",300);
+hold off;
+
+% Plot normalized angular error
+figure(6); clf;
+plot(MNratios, obbcs_dat.angerr); hold on;
+plot(MNratios, biht_dat.angerr);
+plot(MNratios, oblp_dat.angerr);
+plot(MNratios, obbp_dat.angerr);
+xlabel("MN ratios")
+ylabel("Normalized angular error") 
+legend("OBBCS", "BIHT","OBLP", "OBBP");
+grid('on')
+output_file_path = fullfile(output_dir, "angle_err_to_ratios_1img.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
