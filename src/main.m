@@ -24,7 +24,7 @@ processed_images = processed_images./im_norm;
 %% Create data for sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-MNratios = linspace(0,2,10);
+MNratios = linspace(0,2.5,10);
 rows_list = floor(cols * MNratios);
 rows_list(1) = 50; 
 
@@ -122,11 +122,11 @@ for i = 1:length(rows_list)
     oblp_dat.xhat = one_bit_lp(y, Phi);
     obbp_dat.xhat = one_bit_bp(y, Phi);
     
-    % Rescale
-    biht_dat.xhat = pos(biht_dat.xhat);
-    obbcs_dat.xhat =pos(obbcs_dat.xhat);
-    oblp_dat.xhat = pos(oblp_dat.xhat);
-    obbp_dat.xhat = pos(obbp_dat.xhat);
+    % % Rescale
+    % biht_dat.xhat = pos(biht_dat.xhat);
+    % obbcs_dat.xhat =pos(obbcs_dat.xhat);
+    % oblp_dat.xhat = pos(oblp_dat.xhat);
+    % obbp_dat.xhat = pos(obbp_dat.xhat);
 
     % Plot
     subplot(4,10,i); 
@@ -160,10 +160,10 @@ hold off;
 %% Plot snr and nmse for single image
 % Plot SNR
 figure(3); clf;
-plot(MNratios, obbcs_dat.snr); hold on;
-plot(MNratios, biht_dat.snr);
-plot(MNratios, oblp_dat.snr);
-plot(MNratios, obbp_dat.snr);
+plot(MNratios, obbcs_dat.snr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.snr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.snr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.snr, LineWidth=1.2, Marker="diamond");
 xlabel("MN ratios")
 ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBLP", "OBBP");
@@ -177,10 +177,10 @@ hold off;
 delta = nmse_lower_bound(height*width,rows_list, K, 1.4);
 
 figure(4); clf;
-plot(MNratios, obbcs_dat.nmse); hold on;
-plot(MNratios, biht_dat.nmse);
-plot(MNratios, oblp_dat.nmse);
-plot(MNratios, obbp_dat.nmse);
+plot(MNratios, obbcs_dat.nmse, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.nmse, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.nmse, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.nmse, LineWidth=1.2, Marker="diamond");
 plot(MNratios,delta, "--", Color="black")
 xlabel("MN ratios")
 ylabel("NMSE") 
@@ -192,10 +192,10 @@ hold off;
 
 % Plot normalized Hamming error
 figure(5); clf;
-plot(MNratios, obbcs_dat.hamerr); hold on;
-plot(MNratios, biht_dat.hamerr);
-plot(MNratios, oblp_dat.hamerr);
-plot(MNratios, obbp_dat.hamerr);
+plot(MNratios, obbcs_dat.hamerr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.hamerr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.hamerr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.hamerr, LineWidth=1.2, Marker="diamond");
 xlabel("MN ratios")
 ylabel("Normalized Hamming error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP");
@@ -206,10 +206,10 @@ hold off;
 
 % Plot normalized angular error
 figure(6); clf;
-plot(MNratios, obbcs_dat.angerr); hold on;
-plot(MNratios, biht_dat.angerr);
-plot(MNratios, oblp_dat.angerr);
-plot(MNratios, obbp_dat.angerr);
+plot(MNratios, obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.angerr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.angerr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
 xlabel("MN ratios")
 ylabel("Normalized angular error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP");
@@ -220,7 +220,10 @@ hold off;
 
 
 %% Test on multiple images
-N = 6;
+N = 5;
+maxiter=300;
+htol = 0;
+tor = 1e-6;
 
 obbcs_dat.snr = zeros(1, length(rows_list));
 obbcs_dat.nmse = zeros(1, length(rows_list));
@@ -278,11 +281,11 @@ for i = 1:length(rows_list)
         oblp_dat.xhat = one_bit_lp(y, Phi);
         obbp_dat.xhat = one_bit_bp(y, Phi);
         
-        % Rescale
-        biht_dat.xhat = pos(biht_dat.xhat);
-        obbcs_dat.xhat = pos(obbcs_dat.xhat);
-        oblp_dat.xhat = pos(oblp_dat.xhat);
-        obbp_dat.xhat = pos(obbp_dat.xhat);
+        % % Rescale
+        % biht_dat.xhat = pos(biht_dat.xhat);
+        % obbcs_dat.xhat = pos(obbcs_dat.xhat);
+        % oblp_dat.xhat = pos(oblp_dat.xhat);
+        % obbp_dat.xhat = pos(obbp_dat.xhat);
     
         % Collect metrics
         [nmse_biht_list(i), snr_biht_list(i), hamerr_biht_list(i), angerr_biht_list(i)] = ...
@@ -322,63 +325,66 @@ output_file_path = fullfile(output_dir, 'average_metrics.mat');
 save(output_file_path, "obbcs_dat", "biht_dat", "oblp_dat", "obbp_dat");
 
 %% plot average snr and nmse for image
+output_file_path = fullfile(output_dir, 'average_metrics.mat');
+load(output_file_path);
+
 % Plot SNR
 figure(7); clf;
-plot(MNratios, obbcs_dat.snr); hold on;
-plot(MNratios, biht_dat.snr);
-plot(MNratios, oblp_dat.snr);
-plot(MNratios, obbp_dat.snr);
-xlabel("MN ratios")
+plot(MNratios, obbcs_dat.snr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.snr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.snr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.snr, LineWidth=1.2, Marker="diamond");
+xlabel("M/N")
 ylabel("SNR (dB)") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT","OBLP", "OBBP", "Location","best");
 grid on;
-output_file_path = fullfile(output_dir, "snr_to_ratios.png");
+output_file_path = fullfile(output_dir, "avg_snr_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
 
 % Plot NMSE
-delta = nmse_lower_bound(height*width,rows_list, K, 0.2);
-
+% delta = nmse_lower_bound(height*width,rows_list, K, 0.2);
+% delta = K./rows_list*0.1;
 figure(8); clf;
-plot(MNratios, obbcs_dat.nmse); hold on;
-plot(MNratios, biht_dat.nmse);
-plot(MNratios, oblp_dat.nmse);
-plot(MNratios, obbp_dat.nmse);
-plot(MNratios,delta, "--", Color="black")
-xlabel("MN ratios")
+plot(MNratios, obbcs_dat.nmse, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.nmse, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.nmse, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.nmse, LineWidth=1.2, Marker="diamond");
+% plot(MNratios,delta, "--", Color="black")
+xlabel("M/N")
 ylabel("NMSE") 
-legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound");
+legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound", "Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "nmse_to_ratios.png");
+output_file_path = fullfile(output_dir, "avg_nmse_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
 % Plot normalized Hamming error
 figure(9); clf;
-plot(MNratios, obbcs_dat.hamerr); hold on;
-plot(MNratios, biht_dat.hamerr);
-plot(MNratios, oblp_dat.hamerr);
-plot(MNratios, obbp_dat.hamerr);
-xlabel("MN ratios")
+plot(MNratios, obbcs_dat.hamerr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.hamerr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.hamerr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.hamerr, LineWidth=1.2, Marker="diamond");
+xlabel("M/N")
 ylabel("Normalized Hamming error") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "hamming_err_to_ratios.png");
+output_file_path = fullfile(output_dir, "avg_hamming_err_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
 % Plot normalized angular error
 figure(10); clf;
-plot(MNratios, obbcs_dat.angerr); hold on;
-plot(MNratios, biht_dat.angerr);
-plot(MNratios, oblp_dat.angerr);
-plot(MNratios, obbp_dat.angerr);
-xlabel("MN ratios")
-ylabel("Normalized angular error") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+plot(MNratios, 1./obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, 1./biht_dat.angerr, LineWidth=1.2, Marker="o");
+plot(MNratios, 1./oblp_dat.angerr, LineWidth=1.2, Marker="*");
+plot(MNratios, 1./obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
+xlabel("M/N")
+ylabel("(Normalized angular error)^{-1}") 
+legend("OBBCS", "BIHT","OBLP", "OBBP", "Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "angle_err_to_ratios.png");
+output_file_path = fullfile(output_dir, "avg_angle_err_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 

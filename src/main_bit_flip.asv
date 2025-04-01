@@ -174,9 +174,9 @@ hold off;
 % Plot SNR
 figure(3); clf;
 plot(flips/measurements*100, obbcs_dat.snr, LineWidth=1.2, Marker="+"); hold on;
-plot(flips/measurements*100, biht_dat.snr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.snr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.snr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, biht_dat.snr, LineWidth=1.2);
+plot(flips/measurements*100, oblp_dat.snr, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.snr, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -190,8 +190,8 @@ hold off;
 figure(4); clf;
 plot(flips/measurements*100, obbcs_dat.nmse, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.nmse, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.nmse, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.nmse, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.nmse, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.nmse, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("NMSE") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -204,8 +204,8 @@ hold off;
 figure(5); clf;
 plot(flips/measurements*100, obbcs_dat.hamerr, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.hamerr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.hamerr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.hamerr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.hamerr, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.hamerr, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("Normalized Hamming error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -218,8 +218,8 @@ hold off;
 figure(6); clf;
 plot(flips/measurements*100, obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.angerr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.angerr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.angerr, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.angerr, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("Normalized angular error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -343,8 +343,8 @@ load(output_file_path);
 figure(7); clf;
 plot(flips/measurements*100, obbcs_dat.snr, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.snr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.snr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.snr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.snr, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.snr, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -358,8 +358,8 @@ hold off;
 figure(8); clf;
 plot(flips/measurements*100, obbcs_dat.nmse, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.nmse, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.nmse, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.nmse, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.nmse, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.nmse, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("NMSE") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
@@ -372,8 +372,8 @@ hold off;
 figure(9); clf;
 plot(flips/measurements*100, obbcs_dat.hamerr, LineWidth=1.2, Marker="+"); hold on;
 plot(flips/measurements*100, biht_dat.hamerr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, oblp_dat.hamerr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, obbp_dat.hamerr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, oblp_dat.hamerr, LineWidth=1.2);
+plot(flips/measurements*100, obbp_dat.hamerr, LineWidth=1.2);
 xlabel("Percentage of flipped bits")
 ylabel("Normalized Hamming error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
