@@ -220,7 +220,7 @@ hold off;
 
 
 %% Test on multiple images
-N = 5;
+N = 4;
 maxiter=300;
 htol = 0;
 tor = 1e-6;
@@ -288,13 +288,13 @@ for i = 1:length(rows_list)
         % obbp_dat.xhat = pos(obbp_dat.xhat);
     
         % Collect metrics
-        [nmse_biht_list(i), snr_biht_list(i), hamerr_biht_list(i), angerr_biht_list(i)] = ...
+        [nmse_biht_list(j), snr_biht_list(j), hamerr_biht_list(j), angerr_biht_list(j)] = ...
             get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
-        [nmse_obbcs_list(i), snr_obbcs_list(i), hamerr_obbcs_list(i), angerr_obbcs_list(i)] = ...
+        [nmse_obbcs_list(j), snr_obbcs_list(j), hamerr_obbcs_list(j), angerr_obbcs_list(j)] = ...
             get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
-        [nmse_oblp_list(i), snr_oblp_list(i), hamerr_oblp_list(i), angerr_oblp_list(i)] = ...
+        [nmse_oblp_list(j), snr_oblp_list(j), hamerr_oblp_list(j), angerr_oblp_list(j)] = ...
             get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
-        [nmse_obbp_list(i), snr_obbp_list(i), hamerr_obbp_list(i), angerr_obbp_list(i)] = ...
+        [nmse_obbp_list(j), snr_obbp_list(j), hamerr_obbp_list(j), angerr_obbp_list(j)] = ...
             get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
     end
 

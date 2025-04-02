@@ -80,7 +80,7 @@ measurements = floor(1.5*cols); %
 
 % Generate the bit flip array
 % flips from 0-30% of measurements in 8 steps
-steps = 8;
+steps = 10;
 flips = linspace(0,0.2,steps);
 flips = floor(flips*measurements);
 %% Test on single image with bitflip
@@ -181,7 +181,7 @@ xlabel("Percentage of flipped bits")
 ylabel("SNR (dB)") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid on;
-output_file_path = fullfile(output_dir, "snr_to_flips_1img.png");
+output_file_path = fullfile(output_dir, "1img_snr_to_flips.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
@@ -196,7 +196,7 @@ xlabel("Percentage of flipped bits")
 ylabel("NMSE") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "nmse_to_flips_1img.png");
+output_file_path = fullfile(output_dir, "1img_nmse_to_flips.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
@@ -210,7 +210,7 @@ xlabel("Percentage of flipped bits")
 ylabel("Normalized Hamming error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "hamming_err_to_flips_1img.png");
+output_file_path = fullfile(output_dir, "1img_hamming_err_to_flips.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
@@ -224,12 +224,12 @@ xlabel("Percentage of flipped bits")
 ylabel("Normalized angular error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid('on')
-output_file_path = fullfile(output_dir, "angular_err_to_flips_1img.png");
+output_file_path = fullfile(output_dir, "1img_angular_err_to_flips.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
 %% Test on multiple images bitflip
-N = 6;
+N = 4;
 
 obbcs_dat.snr = zeros(1, length(flips));
 obbcs_dat.nmse = zeros(1, length(flips));
@@ -298,13 +298,13 @@ for i = 1:length(flips)
         % obbp_dat.xhat = pos(obbp_dat.xhat);
     
         % Collect metrics
-        [nmse_biht_list(i), snr_biht_list(i), hamerr_biht_list(i), angerr_biht_list(i)] = ...
+        [nmse_biht_list(j), snr_biht_list(j), hamerr_biht_list(j), angerr_biht_list(j)] = ...
             get_stats(x, biht_dat.xhat, y , sgn(Phi*biht_dat.xhat));
-        [nmse_obbcs_list(i), snr_obbcs_list(i), hamerr_obbcs_list(i), angerr_obbcs_list(i)] = ...
+        [nmse_obbcs_list(j), snr_obbcs_list(j), hamerr_obbcs_list(j), angerr_obbcs_list(j)] = ...
             get_stats(x, obbcs_dat.xhat, y, sgn(Phi*obbcs_dat.xhat));
-        [nmse_oblp_list(i), snr_oblp_list(i), hamerr_oblp_list(i), angerr_oblp_list(i)] = ...
+        [nmse_oblp_list(j), snr_oblp_list(j), hamerr_oblp_list(j), angerr_oblp_list(j)] = ...
             get_stats(x, oblp_dat.xhat, y, sgn(Phi*oblp_dat.xhat));
-        [nmse_obbp_list(i), snr_obbp_list(i), hamerr_obbp_list(i), angerr_obbp_list(i)] = ...
+        [nmse_obbp_list(j), snr_obbp_list(j), hamerr_obbp_list(j), angerr_obbp_list(j)] = ...
             get_stats(x, obbp_dat.xhat, y, sgn(Phi*obbp_dat.xhat));
     end
 
