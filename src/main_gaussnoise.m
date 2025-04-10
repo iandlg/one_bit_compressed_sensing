@@ -24,12 +24,13 @@ processed_images = processed_images./im_norm;
 %% Create data for sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-MNratios = linspace(0,2.5,10);
+steps = 3;
+MNratios = linspace(0.5,2.5,steps);
 rows_list = floor(cols * MNratios);
-rows_list(1) = 50; 
+% rows_list(1) = 50; 
 
 %% Test on single image
-idx = 10;
+idx = 18;
 x = processed_images(:,idx);
 K = nnz(x);
 maxiter=300;
@@ -93,16 +94,12 @@ for i = 1:length(rows_list)
     % Plot
     subplot(4,length(rows_list),i); 
     imshow(reshape(rescale(biht_dat.xhat),height,width))
-    title('BIHT', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,length(rows_list),length(rows_list) + i); 
     imshow(reshape(rescale(obbcs_dat.xhat),height,width))
-    title('OBBCS', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,length(rows_list),2*length(rows_list)+i);
     imshow(reshape(rescale(oblp_dat.xhat), height, width))
-    title('OBLP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     subplot(4,length(rows_list),3*length(rows_list)+i); 
     imshow(reshape(rescale(obbp_dat.xhat), height, width))
-    title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     
     % Collect metrics
     [biht_dat.nmse(i), biht_dat.snr(i), biht_dat.hamerr(i), biht_dat.angerr(i)] = ...
@@ -305,6 +302,8 @@ save(output_file_path, "obbcs_dat", "biht_dat", "oblp_dat", "obbp_dat", "hamm_me
 %% Plot noisy metrics
 output_file_path = fullfile(output_dir, 'noisy_average_metrics.mat');
 load(output_file_path)
+K = 170;
+N = 28^2;
 
 % Plot SNR
 figure(7); clf;
@@ -312,9 +311,9 @@ plot(MNratios, obbcs_dat.snr, LineWidth=1.2, Marker="+"); hold on;
 plot(MNratios, biht_dat.snr, LineWidth=1.2, Marker="o");
 plot(MNratios, oblp_dat.snr, LineWidth=1.2, Marker="*");
 plot(MNratios, obbp_dat.snr, LineWidth=1.2, Marker="diamond");
-xlabel("MN ratios")
+xlabel("M/N")
 ylabel("SNR (dB)") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT","OBLP", "OBBP",Location="best");
 grid on;
 output_file_path = fullfile(output_dir, "noisy_snr_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
@@ -327,9 +326,9 @@ plot(MNratios, obbcs_dat.nmse, LineWidth=1.2, Marker="+"); hold on;
 plot(MNratios, biht_dat.nmse, LineWidth=1.2, Marker="o");
 plot(MNratios, oblp_dat.nmse, LineWidth=1.2, Marker="*");
 plot(MNratios, obbp_dat.nmse, LineWidth=1.2, Marker="diamond");
-xlabel("MN ratios")
+xlabel("M/N")
 ylabel("NMSE") 
-legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound");
+legend("OBBCS", "BIHT","OBLP", "OBBP", "NMSE upper bound",Location="best");
 grid('on')
 output_file_path = fullfile(output_dir, "noisy_nmse_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
@@ -343,25 +342,26 @@ plot(MNratios, oblp_dat.hamerr, LineWidth=1.2, Marker="*");
 plot(MNratios, obbp_dat.hamerr, LineWidth=1.2, Marker="diamond");
 plot(MNratios, hamm_measurement, LineWidth=1, Color=[0 0 0])
 
-xlabel("MN ratios")
+xlabel("M/N")
 ylabel("Normalized Hamming error") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT","OBLP", "OBBP","Original to Noisy",Location="best");
 grid('on')
 output_file_path = fullfile(output_dir, "noisy_hamming_err_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);
 hold off;
 
 % Plot normalized angular error
-% epsilon = 0.1*sqrt(K./rows_list.*log(M.*N./K));
+epsilon = 0.13*sqrt(K./rows_list.*log(rows_list.*N./K));
 
 figure(10); clf;
 plot(MNratios, obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
 plot(MNratios, biht_dat.angerr, LineWidth=1.2, Marker="o");
 plot(MNratios, oblp_dat.angerr, LineWidth=1.2, Marker="*");
 plot(MNratios, obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
-xlabel("MN ratios")
+plot(MNratios, hamm_measurement+ epsilon, LineWidth=1.2, LineStyle="--", Color=[0 0 0])
+xlabel("M/N")
 ylabel("Normalized angular error") 
-legend("OBBCS", "BIHT","OBLP", "OBBP");
+legend("OBBCS", "BIHT","OBLP", "OBBP","Theoretical bound",Location="best");
 grid('on')
 output_file_path = fullfile(output_dir, "noisy_angle_err_to_ratios.png");
 exportgraphics(gcf, output_file_path, "Resolution",300);

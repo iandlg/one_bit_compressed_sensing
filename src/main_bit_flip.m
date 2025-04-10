@@ -384,12 +384,12 @@ hold off;
 
 % Plot normalized angular error
 figure(10); clf;
-plot(flips/measurements*100, 1./obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
-plot(flips/measurements*100, 1./biht_dat.angerr, LineWidth=1.2, Marker="o");
-plot(flips/measurements*100, 1./oblp_dat.angerr, LineWidth=1.2, Marker="*");
-plot(flips/measurements*100, 1./obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
+plot(flips/measurements*100, obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
+plot(flips/measurements*100, biht_dat.angerr, LineWidth=1.2, Marker="o");
+plot(flips/measurements*100, oblp_dat.angerr, LineWidth=1.2, Marker="*");
+plot(flips/measurements*100, obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
 xlabel("Percentage of flipped bits")
-ylabel("(Normalized angular error)^{-1}") 
+ylabel("Normalized angular error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP","Location","best");
 grid('on')
 output_file_path = fullfile(output_dir, "avg_angular_err_to_flips.png");

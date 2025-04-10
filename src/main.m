@@ -24,7 +24,8 @@ processed_images = processed_images./im_norm;
 %% Create data for sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-MNratios = linspace(0,2.5,10);
+steps = 10;
+MNratios = linspace(0,2.5,steps);
 rows_list = floor(cols * MNratios);
 rows_list(1) = 50; 
 
@@ -129,18 +130,14 @@ for i = 1:length(rows_list)
     % obbp_dat.xhat = pos(obbp_dat.xhat);
 
     % Plot
-    subplot(4,10,i); 
+    subplot(4,steps,i); 
     imshow(reshape(rescale(biht_dat.xhat),height,width))
-    title('BIHT', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
-    subplot(4,10,10 + i); 
+    subplot(4,steps,steps + i); 
     imshow(reshape(rescale(obbcs_dat.xhat),height,width))
-    title('OBBCS', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
-    subplot(4,10,20+i);
+    subplot(4,steps,2*steps+i);
     imshow(reshape(rescale(oblp_dat.xhat), height, width))
-    title('OBLP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
-    subplot(4,10,30+i); 
+    subplot(4,steps,3*steps+i); 
     imshow(reshape(rescale(obbp_dat.xhat), height, width))
-    title('OBBP', 'FontSize', 8, 'FontWeight', 'normal', 'HorizontalAlignment', 'center');
     
     % Collect metrics
     [biht_dat.nmse(i), biht_dat.snr(i), biht_dat.hamerr(i), biht_dat.angerr(i)] = ...
@@ -376,12 +373,12 @@ hold off;
 
 % Plot normalized angular error
 figure(10); clf;
-plot(MNratios, 1./obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
-plot(MNratios, 1./biht_dat.angerr, LineWidth=1.2, Marker="o");
-plot(MNratios, 1./oblp_dat.angerr, LineWidth=1.2, Marker="*");
-plot(MNratios, 1./obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
+plot(MNratios, obbcs_dat.angerr, LineWidth=1.2, Marker="+"); hold on;
+plot(MNratios, biht_dat.angerr, LineWidth=1.2, Marker="o");
+plot(MNratios, oblp_dat.angerr, LineWidth=1.2, Marker="*");
+plot(MNratios, obbp_dat.angerr, LineWidth=1.2, Marker="diamond");
 xlabel("M/N")
-ylabel("(Normalized angular error)^{-1}") 
+ylabel("Normalized angular error") 
 legend("OBBCS", "BIHT","OBLP", "OBBP", "Location","best");
 grid('on')
 output_file_path = fullfile(output_dir, "avg_angle_err_to_ratios.png");
