@@ -1,4 +1,4 @@
-%% import MNIST dataset
+%% import MNIST datase
 clc; clear; close all;
 
 % Put the mnist.mat file in the ../data directory
