@@ -24,7 +24,7 @@ processed_images = processed_images./im_norm;
 %% Create data for sensing matrices
 % List of row sizes for the projection matrices
 cols = height*width;  % Image vector dimension
-steps = 10;
+steps = 4;
 MNratios = linspace(0,2.5,steps);
 rows_list = floor(cols * MNratios);
 rows_list(1) = 50; 

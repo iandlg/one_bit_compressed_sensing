@@ -2,18 +2,18 @@
 clc; clear; close all;
 
 % Put the mnist.mat file in the ../data directory
-% data_dir = fullfile("..", "data");
-% mnist_dir = fullfile(data_dir, "mnist.mat");
-% load(mnsit_dir)
+data_dir = fullfile("..", "data");
+mnist_dir = fullfile(data_dir, "mnist.mat");
+load(mnist_dir)
 scriptDir = fileparts(mfilename("fullpath"));
 mnist_dir = fullfile(scriptDir, "data", "mnist.mat");
 
-if isfile(mnist_dir)
-    load(mnist_dir);
-    disp("MNIST data loaded successfully.");
-else
-    error("File not found at: %s", mnist_dir);
-end
+% if isfile(mnist_dir)
+%     load(mnist_dir);
+%     disp("MNIST data loaded successfully.");
+% else
+%     error("File not found at: %s", mnist_dir);
+% end
 
 
 output_dir = fullfile("..", "out");
@@ -251,6 +251,7 @@ for i = 1:length(rows_list)
     snr_obbcs_list = zeros(1,N);
     snr_oblp_list = zeros(1,N);
     snr_obbp_list = zeros(1,N);
+    
 
     nmse_biht_list = zeros(1,N);
     nmse_obbcs_list = zeros(1,N);
@@ -266,6 +267,13 @@ for i = 1:length(rows_list)
     angerr_obbcs_list = zeros(1,N);
     angerr_oblp_list = zeros(1,N);
     angerr_obbp_list = zeros(1,N);
+
+    time_biht_list = zeros(1,N);
+    time_obbcs_list = zeros(1,N);
+    time_oblp_list = zeros(1,N);
+    time_obbp_list = zeros(1,N);
+
+
 
     hamm_meas_list = zeros(1,N);
 
@@ -287,19 +295,19 @@ for i = 1:length(rows_list)
         % Signal reconstruction
         tic;
         [biht_dat.xhat, ~] = biht_l1(y_w, Phi, K, maxiter, htol);
-        biht_dat.time(j) = toc;
+        time_biht_list(j) = toc;
 
         tic;
         [obbcs_dat.xhat, ~] = obbcs(y_w, Phi, maxiter, tor);
-        obbcs_dat.time(j) = toc;
+        time_obbcs_list(j) = toc;
 
         tic;
         oblp_dat.xhat = one_bit_lp(y_w, Phi);
-        oblip_dat.time(j) = toc;
+        time_oblp_list(j) = toc;
 
         tic;
         obbp_dat.xhat = one_bit_bp(y_w, Phi);
-        obbp_dat.time(j) = toc;
+        time_obbp_list(j) = toc;
         
         % % Rescale
         % biht_dat.xhat = pos(biht_dat.xhat);
@@ -339,8 +347,12 @@ for i = 1:length(rows_list)
     oblp_dat.angerr(i) = mean(angerr_oblp_list);
     obbp_dat.angerr(i) = mean(angerr_obbp_list);
 
-    hamm_measurement(i) = mean(hamm_meas_list);
+    obbcs_dat.time(i) = mean(time_obbcs_list);
+    biht_dat.time(i) = mean(time_biht_list);
+    oblp_dat.time(i) = mean(time_oblp_list);
+    obbp_dat.time(i) = mean(time_obbp_list);
 
+    hamm_measurement(i) = mean(hamm_meas_list);
 end
 
 output_file_path = fullfile(output_dir, 'noisy_average_metrics.mat');
